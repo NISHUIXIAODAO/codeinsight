@@ -4,15 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "dev": "concurrently \"npm run client:dev\" \"npm run server:java\"",
     "client:dev": "vite",
+    "server:java": "mvn -f api/java-service/pom.xml spring-boot:run",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "check": "tsc --noEmit",
-    "server:dev": "nodemon",
-    "server:java": "mvn -f api/java-service/pom.xml spring-boot:run",
-    "dev": "concurrently \"npm run client:dev\" \"npm run server:dev\"",
-    "dev:java": "concurrently \"npm run client:dev\" \"npm run server:java\""
+    "check": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.3",
