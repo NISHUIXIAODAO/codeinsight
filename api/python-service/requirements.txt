@@ -1,0 +1,6 @@
+Flask==3.0.3
+Flask-Cors==4.0.1
+requests==2.32.3
+networkx==3.2.1
+neo4j==5.21.0
+python-dotenv==1.0.1
