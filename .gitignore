@@ -26,6 +26,9 @@ dist-ssr
 *.mv.db
 *.trace.db
 
+# Private writing drafts / thesis content
+eassy/
+
 # Java / JVM build output
 target/
 build/

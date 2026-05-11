@@ -1,9 +1,22 @@
-import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FolderCode, PlayCircle, User, Settings, LogOut } from 'lucide-react';
 
 const Layout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const profile = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('codeinsight:user-profile');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }, [location.pathname]);
+
+  const displayName = profile.displayName || 'CodeInsight User';
+  const avatarInitial = String(displayName).trim().slice(0, 1).toUpperCase() || 'U';
 
   const navItems = [
     { name: '仪表盘', path: '/dashboard', icon: LayoutDashboard },
@@ -12,9 +25,14 @@ const Layout: React.FC = () => {
     { name: '个人中心', path: '/profile', icon: User },
   ];
 
+  const logout = () => {
+    localStorage.removeItem('codeinsight:session');
+    localStorage.removeItem('codeinsight:auth-token');
+    navigate('/login');
+  };
+
   return (
     <div className="flex h-screen bg-zinc-50">
-      {/* Sidebar */}
       <aside className="w-64 border-r border-zinc-200 bg-white">
         <div className="flex h-16 items-center px-6 border-b border-zinc-200">
           <span className="text-xl font-bold text-blue-600">CodeInsight</span>
@@ -40,26 +58,32 @@ const Layout: React.FC = () => {
           })}
         </nav>
         <div className="absolute bottom-0 w-64 border-t border-zinc-200 p-4">
-          <button className="flex w-full items-center px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
+          <button
+            onClick={logout}
+            className="flex w-full items-center px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+          >
             <LogOut className="mr-3 h-5 w-5" />
             退出登录
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
         <header className="h-16 bg-white border-b border-zinc-200 px-8 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-zinc-800">
             {navItems.find((n) => n.path === location.pathname)?.name || '概览'}
           </h1>
           <div className="flex items-center space-x-4">
-            <button className="p-2 text-zinc-400 hover:text-zinc-600">
+            <Link to="/profile" className="p-2 text-zinc-400 hover:text-zinc-600" title="个人设置">
               <Settings className="h-5 w-5" />
-            </button>
-            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-              U
-            </div>
+            </Link>
+            <Link
+              to="/profile"
+              title={displayName}
+              className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold"
+            >
+              {avatarInitial}
+            </Link>
           </div>
         </header>
         <div className="p-8">

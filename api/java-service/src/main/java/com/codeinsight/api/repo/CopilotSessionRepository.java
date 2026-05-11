@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface CopilotSessionRepository extends JpaRepository<CopilotSessionEntity, String> {
     List<CopilotSessionEntity> findByProjectIdOrderByUpdatedAtDesc(String projectId);
-}
 
+    List<CopilotSessionEntity> findAllByOrderByUpdatedAtDesc();
+}

@@ -7,4 +7,8 @@ import java.util.Optional;
 
 public interface ParseResultRepository extends JpaRepository<ParseResultEntity, String> {
     Optional<ParseResultEntity> findFirstByProjectIdOrderByCreatedAtDesc(String projectId);
+
+    long countByProjectId(String projectId);
+
+    void deleteByProjectId(String projectId);
 }

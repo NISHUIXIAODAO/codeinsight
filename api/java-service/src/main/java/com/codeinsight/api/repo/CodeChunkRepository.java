@@ -10,5 +10,7 @@ public interface CodeChunkRepository extends JpaRepository<CodeChunkEntity, Stri
     @Modifying
     void deleteByProjectId(String projectId);
 
+    long countByProjectId(String projectId);
+
     List<CodeChunkEntity> findByProjectIdAndIdIn(String projectId, List<String> ids);
 }
