@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { RefreshCw, Search, X } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 
 type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | string
 
@@ -19,6 +20,12 @@ function formatTime(value?: string | null) {
   if (!value) return '—'
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return '—'
+  try {
+    const raw = localStorage.getItem('codeinsight:preferences')
+    const timeFormat = raw ? JSON.parse(raw)?.timeFormat : 'local'
+    if (timeFormat === 'iso') return d.toISOString()
+  } catch {
+  }
   return d.toLocaleString()
 }
 
@@ -30,11 +37,13 @@ function badgeClass(status: string) {
 }
 
 export default function TasksPage() {
+  const [searchParams] = useSearchParams()
   const [tasks, setTasks] = useState<TaskRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [status, setStatus] = useState<string>('')
+  const [status, setStatus] = useState<string>(searchParams.get('status') || '')
+  const projectId = searchParams.get('project_id') || ''
   const [taskType, setTaskType] = useState<string>('')
   const [selected, setSelected] = useState<TaskRow | null>(null)
 
@@ -42,8 +51,16 @@ export default function TasksPage() {
     setLoading(true)
     setError(null)
     try {
-      const params: any = { limit: 100 }
+      let limit = 100
+      try {
+        const raw = localStorage.getItem('codeinsight:preferences')
+        const pageSize = raw ? Number(JSON.parse(raw)?.pageSize) : 100
+        if (pageSize > 0) limit = Math.min(Math.max(pageSize, 1), 200)
+      } catch {
+      }
+      const params: any = { limit }
       if (status) params.status = status
+      if (projectId) params.project_id = projectId
       if (taskType) params.task_type = taskType
       const res = await axios.get('/api/tasks', { params })
       if (res.data?.success) {
@@ -60,7 +77,7 @@ export default function TasksPage() {
 
   useEffect(() => {
     fetchTasks()
-  }, [])
+  }, [projectId])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -88,6 +105,11 @@ export default function TasksPage() {
       </div>
 
       <div className="bg-white border rounded-xl p-4 space-y-3">
+        {projectId && (
+          <div className="text-sm text-gray-500">
+            当前筛选项目：<span className="font-medium text-gray-700">{projectId}</span>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

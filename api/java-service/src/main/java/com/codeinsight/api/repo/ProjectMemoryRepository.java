@@ -7,5 +7,8 @@ import java.util.Optional;
 
 public interface ProjectMemoryRepository extends JpaRepository<ProjectMemoryEntity, String> {
     Optional<ProjectMemoryEntity> findByProjectId(String projectId);
-}
 
+    long countByProjectId(String projectId);
+
+    void deleteByProjectId(String projectId);
+}

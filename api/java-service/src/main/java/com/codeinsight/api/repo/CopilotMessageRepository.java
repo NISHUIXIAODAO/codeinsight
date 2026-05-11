@@ -10,4 +10,8 @@ public interface CopilotMessageRepository extends JpaRepository<CopilotMessageEn
     List<CopilotMessageEntity> findTop40BySessionIdOrderByCreatedAtDesc(String sessionId);
 
     List<CopilotMessageEntity> findBySessionIdOrderByCreatedAtDesc(String sessionId, Pageable pageable);
+
+    List<CopilotMessageEntity> findBySessionIdIn(List<String> sessionIds);
+
+    void deleteBySessionIdIn(List<String> sessionIds);
 }

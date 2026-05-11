@@ -1,11 +1,37 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ArrowLeft, Bot, Plus, Send, User, FileText, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react'
 
 type Mode = 'code' | 'plan'
+
+type StoredCopilotSettings = {
+  defaultMode: Mode
+  topK: number
+  showReasoning: boolean
+  planConstraintTemplate: string
+  showCitations: boolean
+}
+
+const defaultCopilotSettings: StoredCopilotSettings = {
+  defaultMode: 'code',
+  topK: 8,
+  showReasoning: false,
+  planConstraintTemplate: '',
+  showCitations: true,
+}
+
+function readStoredCopilotSettings(): StoredCopilotSettings {
+  try {
+    const raw = window.localStorage.getItem('codeinsight:copilot-settings')
+    if (!raw) return defaultCopilotSettings
+    return { ...defaultCopilotSettings, ...JSON.parse(raw) }
+  } catch {
+    return defaultCopilotSettings
+  }
+}
 
 type Citation = {
   chunk_id: string
@@ -103,16 +129,20 @@ function parseSseEvents(chunk: string) {
 
 export default function CopilotPage() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
+  const savedCopilot = useMemo(readStoredCopilotSettings, [])
+  const queryMode = searchParams.get('mode') === 'plan' ? 'plan' : searchParams.get('mode') === 'code' ? 'code' : null
 
-  const [mode, setMode] = useState<Mode>('code')
+  const [mode, setMode] = useState<Mode>(queryMode || savedCopilot.defaultMode)
   const [messages, setMessages] = useState<Msg[]>([initMessage])
   const [sessionId, setSessionId] = useState<string>('')
   const didRestoreSessionRef = useRef(false)
   const [sessions, setSessions] = useState<SessionItem[]>([])
   const [input, setInput] = useState('')
-  const [constraints, setConstraints] = useState('')
-  const [thinking, setThinking] = useState(false)
-  const [topK, setTopK] = useState(8)
+  const [constraints, setConstraints] = useState(savedCopilot.planConstraintTemplate)
+  const [thinking, setThinking] = useState(savedCopilot.showReasoning)
+  const [topK, setTopK] = useState(savedCopilot.topK)
+  const [showCitations] = useState(savedCopilot.showCitations)
   const [loading, setLoading] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -145,6 +175,10 @@ export default function CopilotPage() {
   useEffect(() => {
     refreshSessions()
   }, [id])
+
+  useEffect(() => {
+    if (queryMode) setMode(queryMode)
+  }, [queryMode])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -545,9 +579,9 @@ export default function CopilotPage() {
               <input
                 type="number"
                 min={1}
-                max={20}
+                max={30}
                 value={topK}
-                onChange={(e) => setTopK(Math.max(1, Math.min(20, Number(e.target.value) || 8)))}
+                onChange={(e) => setTopK(Math.max(1, Math.min(30, Number(e.target.value) || 8)))}
                 disabled={loading || loadingHistory}
                 className="w-16 px-2 py-1 border rounded"
               />
@@ -586,7 +620,7 @@ export default function CopilotPage() {
                     )}
 
                     {m.citations && m.citations.length > 0 && (
-                      <details className="mt-3">
+                      <details className="mt-3" open={showCitations}>
                         <summary className="text-xs text-gray-500 cursor-pointer select-none hover:text-gray-700 transition-colors">证据引用（{m.citations.length}）</summary>
                         <div className="mt-2 p-2 bg-gray-100 rounded-lg text-xs space-y-1 border border-gray-200">
                           {m.citations.map((c, idx) => (

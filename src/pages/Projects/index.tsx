@@ -26,6 +26,15 @@ const Projects: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem('codeinsight:user-profile');
+      const defaultWorkspace = raw ? JSON.parse(raw)?.defaultWorkspace : '';
+      if (defaultWorkspace && !importPath) setImportPath(defaultWorkspace);
+    } catch {
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchProjects = async () => {
       setLoading(true);
       setError(null);
